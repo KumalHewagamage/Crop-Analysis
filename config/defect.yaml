@@ -1,0 +1,15 @@
+path:  data/pineapple_defect
+
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 5
+names: ['Defects-black spots', 'Defects-white fungus', 'overripe', 'ripe', 'unripe']
+
+roboflow:
+  workspace: pinapple-defects
+  project: pineapple-defect-detection-2-rygms
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pinapple-defects/pineapple-defect-detection-2-rygms/dataset/1
