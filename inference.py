@@ -23,13 +23,8 @@ def extract_detections(result):
     if len(boxes) == 0:
         print("No detection.")
     else:
-        # Loop through each detection in the image
         for i, box in enumerate(boxes):
             
-            # --- EXTRACT DATA SAFELY ---
-            # .cpu() moves data to CPU memory (essential if using GPU)
-            # .item() converts a 1-element tensor to a standard Python scalar (int/float)
-            # .numpy() or .tolist() converts list-like tensors
             
             # 1. Class ID & Name
             cls_id = int(box.cls.cpu().item())
@@ -39,7 +34,7 @@ def extract_detections(result):
             conf = float(box.conf.cpu().item())
 
             # 3. Bounding Box Coordinates
-            # box.xyxy is a tensor of shape (1, 4). [0] gets the inner list.
+            # box.xyxy is a tensor of shape (1, 4). 
             coords = box.xyxy[0].cpu().tolist()
             x1, y1, x2, y2 = [round(x, 2) for x in coords]
 
@@ -49,21 +44,13 @@ def extract_detections(result):
             print(f"  • Confidence: {conf:.2f}")
             print(f"  • BBox (xyxy): [{x1}, {y1}, {x2}, {y2}]")
             
-            # Optional: Print width/height of the defect
+            # Print width/height of the defect
             w = x2 - x1
             h = y2 - y1
             print(f"  • Dim (WxH):   {w:.1f} x {h:.1f} px")
             print("-" * 15)
 
     print("="*50 + "\n")
-
-# --- USAGE EXAMPLE ---
-# If 'results' is a list (e.g., from model.predict()), loop through it:
-# for res in results:
-#     extract_detections(res)
-
-# If you specifically want to check the 4th image (index 3):
-# extract_detections(results[3])
 
 
 # ------------------ CONFIG  ------------------
