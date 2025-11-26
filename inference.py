@@ -2,7 +2,6 @@
 from ultralytics import YOLO
 import os
 
-
 def extract_detections(result):
     path = result.path
     filename = os.path.basename(path)
@@ -25,13 +24,15 @@ def extract_detections(result):
             
             conf = float(box.conf[0])
             
-            coords = box.xyxy[0].tolist() 
-            x1, y1, x2, y2 = [round(x, 2) for x in coords]
+            # CHANGED HERE: Access .xywh instead of .xyxy
+            coords = box.xywh[0].tolist() 
+            x_center, y_center, width, height = [round(x, 2) for x in coords]
 
             print(f"Detection #{i+1}:")
             print(f"  • Type:       {class_name.upper()}")
             print(f"  • Confidence: {conf:.2f}")
-            print(f"  • BBox (xyxy): [{x1}, {y1}, {x2}, {y2}]")
+            # Updated label to match the data
+            print(f"  • Box (xywh): [Xc:{x_center}, Yc:{y_center}, W:{width}, H:{height}]")
 
     print("="*50 + "\n")
 
