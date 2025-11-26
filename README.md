@@ -1,5 +1,8 @@
 # Crop-Analysis — Pineapple Defect & Ripeness Detection
 
+![alt text](models/IMG_20231123_001322_jpg.rf.c592f813ccd6813395b8594894745740.jpg)
+![alt text](models/IMG_0886_JPG_jpg.rf.9d28427eeeb47dc85a5f56fec72be3f3.jpg)
+
 Quick steps to get data, install dependencies, train models, and run inference.
 
 1) Download datasets
