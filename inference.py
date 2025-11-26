@@ -3,38 +3,67 @@ from ultralytics import YOLO
 import os
 
 def extract_detections(result):
+    """
+    Parses a single YOLOv8 'result' object and prints detection details.
+    """
+    # 1. Basic Image Info
     path = result.path
     filename = os.path.basename(path)
-    img_shape = result.orig_shape
+    img_shape = result.orig_shape  # (height, width)
 
+    print("\n" + "="*50)
     print(f"Image: {filename}")
     print(f"Path:  {path}")
     print(f"Size:  {img_shape[1]}x{img_shape[0]} (WxH)")
     print("-" * 30)
 
+    # 2. Get the Boxes object
     boxes = result.boxes
 
     if len(boxes) == 0:
-        print("No defects detected.")
+        print("No detection.")
     else:
+        # Loop through each detection in the image
         for i, box in enumerate(boxes):
             
-            cls_id = int(box.cls[0]) 
+            # --- EXTRACT DATA SAFELY ---
+            # .cpu() moves data to CPU memory (essential if using GPU)
+            # .item() converts a 1-element tensor to a standard Python scalar (int/float)
+            # .numpy() or .tolist() converts list-like tensors
+            
+            # 1. Class ID & Name
+            cls_id = int(box.cls.cpu().item())
             class_name = result.names[cls_id]
-            
-            conf = float(box.conf[0])
-            
-            # CHANGED HERE: Access .xywh instead of .xyxy
-            coords = box.xywh[0].tolist() 
-            x_center, y_center, width, height = [round(x, 2) for x in coords]
 
+            # 2. Confidence Score
+            conf = float(box.conf.cpu().item())
+
+            # 3. Bounding Box Coordinates
+            # box.xyxy is a tensor of shape (1, 4). [0] gets the inner list.
+            coords = box.xyxy[0].cpu().tolist()
+            x1, y1, x2, y2 = [round(x, 2) for x in coords]
+
+            # --- PRINT ---
             print(f"Detection #{i+1}:")
             print(f"  • Type:       {class_name.upper()}")
             print(f"  • Confidence: {conf:.2f}")
-            # Updated label to match the data
-            print(f"  • Box (xywh): [Xc:{x_center}, Yc:{y_center}, W:{width}, H:{height}]")
+            print(f"  • BBox (xyxy): [{x1}, {y1}, {x2}, {y2}]")
+            
+            # Optional: Print width/height of the defect
+            w = x2 - x1
+            h = y2 - y1
+            print(f"  • Dim (WxH):   {w:.1f} x {h:.1f} px")
+            print("-" * 15)
 
     print("="*50 + "\n")
+
+# --- USAGE EXAMPLE ---
+# If 'results' is a list (e.g., from model.predict()), loop through it:
+# for res in results:
+#     extract_detections(res)
+
+# If you specifically want to check the 4th image (index 3):
+# extract_detections(results[3])
 
 
 # ------------------ CONFIG  ------------------
