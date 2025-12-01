@@ -4,9 +4,9 @@ import random
 from datetime import datetime, timedelta
 
 # --- CONFIGURATION ---
-TRAIN_NUM_RECORDS = 10000  # Size of dataset
-TEST_NUM_RECORDS = 3000
-START_DATE = datetime(2018, 1, 1)
+TRAIN_NUM_RECORDS = 6000  # Size of dataset
+TEST_NUM_RECORDS = 2000
+START_DATE = datetime(2000, 1, 1)
 LOCATIONS = ['Block_A_North', 'Block_B_Valley', 'Block_C_Hill', 'Block_D_River']
 SOIL_TYPES = {'Block_A_North': 'Sandy Loam', 'Block_B_Valley': 'Clay Loam', 
               'Block_C_Hill': 'Laterite', 'Block_D_River': 'Alluvial'}
@@ -88,5 +88,5 @@ def generate_synthetic_data(output_dir,num_records):
 # Run it
 train_df = generate_synthetic_data('data/forecasting_data/synthetic_train_dataset.csv', TRAIN_NUM_RECORDS)
 test_df = generate_synthetic_data('data/forecasting_data/synthetic_test_dataset.csv', TEST_NUM_RECORDS)   
-print(train_df.head())  
-print(test_df.head())
+print('num train records:', len(train_df))
+print('num test records:', len(test_df))
