@@ -1,12 +1,15 @@
-# 1. UPDATE THIS to the FULL absolute path on your computer/Colab
-# Example for Colab: /content/data/pineappel_data
-# Example for Windows: C:/Users/Name/Project/data/pineappel_data
-path: data/pineapple_ripe
+path:  data/pineapple_ripe
 
-# 2. Relative paths to images (from the 'path' above)
-train: train/obj
-val: test/test 
+train: train/images
+val: valid/images
+test: test/images
 
-# 3. Class setup
-nc: 2
-names: ['Immature', 'Ripe']
+nc: 5
+names: ['Defects-black spots', 'Defects-white fungus', 'overripe', 'ripe', 'unripe']
+
+roboflow:
+  workspace: pinapple-defects
+  project: pineapple-defect-detection-2-rygms
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pinapple-defects/pineapple-defect-detection-2-rygms/dataset/1
