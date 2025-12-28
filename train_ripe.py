@@ -3,11 +3,11 @@ from ultralytics import YOLO
 def train_model():
     model = YOLO('models/pretrained/yolo11m.pt') 
     results = model.train(
-        data='config/defect.yaml', 
+        data='config/ripe.yaml', 
         epochs=50, 
         imgsz=640,
         batch=16,
-        name='pineapple_defect_model_v2'
+        name='pineapple_ripe_model_v2'
     )
 
 if __name__ == '__main__':

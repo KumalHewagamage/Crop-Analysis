@@ -4,8 +4,8 @@ train: train/images
 val: valid/images
 test: test/images
 
-nc: 5
-names: ['Defects-black spots', 'Defects-white fungus', 'overripe', 'ripe', 'unripe']
+nc: 3
+names: ['overripe', 'ripe', 'unripe']
 
 roboflow:
   workspace: pinapple-defects
