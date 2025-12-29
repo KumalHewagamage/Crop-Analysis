@@ -7,7 +7,7 @@ def train_model():
         epochs=50, 
         imgsz=640,
         batch=16,
-        name='pineapple_ripe_model_v2'
+        name='pineapple_ripe_model_v3'
     )
 
 if __name__ == '__main__':

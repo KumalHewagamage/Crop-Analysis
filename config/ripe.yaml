@@ -8,8 +8,8 @@ nc: 3
 names: ['overripe', 'ripe', 'unripe']
 
 roboflow:
-  workspace: pinapple-defects
-  project: pineapple-defect-detection-2-rygms
+  workspace: pineapple-grading-system-ripeness-machine-vision
+  project: pineapple-maturity-project-app
   version: 1
   license: CC BY 4.0
-  url: https://universe.roboflow.com/pinapple-defects/pineapple-defect-detection-2-rygms/dataset/1
+  url: https://universe.roboflow.com/pineapple-grading-system-ripeness-machine-vision/pineapple-maturity-project-app/dataset/1

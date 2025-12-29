@@ -51,13 +51,15 @@ def extract_detections(result):
             print("-" * 15)
 
     print("="*50 + "\n")
+    return cls_id
 
 
 # ------------------ CONFIG  ------------------
-DEFECT_WEIGHTS = "models/pineapple_defect/weights/best.pt"
-RIPE_WEIGHTS = "models/pineapple_ripe/weights/best.pt"
-# SOURCE = "data/pineapple_defect/test/images"
-SOURCE = "test_imgs"
+RIPE_WEIGHTS = "runs/detect/pineapple_ripe_model_v3/weights/best.pt"
+
+
+# SOURCE = "test_imgs" # multiple images
+SOURCE = "test_imgs/IMG_0886_JPG_jpg.rf.9d28427eeeb47dc85a5f56fec72be3f3.jpg" # single image
 
 CONF = 0.25
 IMG_SIZE = 640
@@ -66,31 +68,17 @@ DEVICE = '0' # 'cpu' or GPU id like '0'
 
 OUTPUT_PROJECT = "runs/infer"
 RIPE_OUTPUT_NAME = "ripe"
-DEFECT_OUTPUT_NAME = "defect"
 # Overwrite existing output folder if True
 EXIST_OK = True
 # ---------------------------------------------------------
 
 
-if not os.path.exists(DEFECT_WEIGHTS):
-    raise FileNotFoundError(f"Weights not found: {DEFECT_WEIGHTS}")
 if not os.path.exists(RIPE_WEIGHTS):
     raise FileNotFoundError(f"Weights not found: {RIPE_WEIGHTS}")
 
 
-defect_model = YOLO(DEFECT_WEIGHTS)
 ripe_model = YOLO(RIPE_WEIGHTS)
 
-defect_results = defect_model.predict(
-    source=SOURCE,
-    conf=CONF,
-    imgsz=IMG_SIZE,
-    device=DEVICE,
-    project=OUTPUT_PROJECT,
-    name=DEFECT_OUTPUT_NAME,
-    exist_ok=EXIST_OK,
-    save=True,
-)
 
 ripe_results = ripe_model.predict(
     source=SOURCE,
@@ -103,6 +91,10 @@ ripe_results = ripe_model.predict(
     save=True,
 )
 
-for defect_result,ripe_result in zip(defect_results, ripe_results):
-    extract_detections(defect_result)
-    extract_detections(ripe_result)
+print(f"\n[Ripe Detection] Total images processed: {len(ripe_results)}")
+
+for ripe_result in ripe_results:
+    print(len(ripe_result.boxes), "ripe detections found.")
+    class_id = extract_detections(ripe_result)
+    print(f"Ripe Class ID: {class_id}")
+    
