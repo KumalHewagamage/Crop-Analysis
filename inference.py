@@ -2,9 +2,11 @@
 from ultralytics import YOLO
 import os
 
+
 def extract_detections(result):
     """
     Parses a single YOLOv8 'result' object and prints detection details.
+    Returns a list of class IDs for all detections in the image.
     """
     # 1. Basic Image Info
     path = result.path
@@ -19,6 +21,7 @@ def extract_detections(result):
 
     # 2. Get the Boxes object
     boxes = result.boxes
+    class_ids = []  # List to store all class IDs
 
     if len(boxes) == 0:
         print("No detection.")
@@ -28,6 +31,7 @@ def extract_detections(result):
             
             # 1. Class ID & Name
             cls_id = int(box.cls.cpu().item())
+            class_ids.append(cls_id)  # Add to list
             class_name = result.names[cls_id]
 
             # 2. Confidence Score
@@ -51,17 +55,17 @@ def extract_detections(result):
             print("-" * 15)
 
     print("="*50 + "\n")
-    return cls_id
+    return class_ids
 
 
 # ------------------ CONFIG  ------------------
 RIPE_WEIGHTS = "runs/detect/pineapple_ripe_model_v3/weights/best.pt"
 
 
-# SOURCE = "test_imgs" # multiple images
-SOURCE = "test_imgs/IMG_0886_JPG_jpg.rf.9d28427eeeb47dc85a5f56fec72be3f3.jpg" # single image
+SOURCE = "test_imgs" # multiple images
+# SOURCE = "test_imgs/IMG_0803_JPG_jpg.rf.4aa2d93dd827287723a64a11de6b5f1f.jpg" # single image
 
-CONF = 0.25
+CONF = 0.5
 IMG_SIZE = 640
 DEVICE = '0' # 'cpu' or GPU id like '0'
 
@@ -77,10 +81,10 @@ if not os.path.exists(RIPE_WEIGHTS):
     raise FileNotFoundError(f"Weights not found: {RIPE_WEIGHTS}")
 
 
-ripe_model = YOLO(RIPE_WEIGHTS)
+defect_model = YOLO(RIPE_WEIGHTS)
 
 
-ripe_results = ripe_model.predict(
+defect_results = defect_model.predict(
     source=SOURCE,
     conf=CONF,
     imgsz=IMG_SIZE,
@@ -91,10 +95,12 @@ ripe_results = ripe_model.predict(
     save=True,
 )
 
-print(f"\n[Ripe Detection] Total images processed: {len(ripe_results)}")
+print(f"\n[Ripe Detection] Total images processed: {len(defect_results)}")
 
-for ripe_result in ripe_results:
-    print(len(ripe_result.boxes), "ripe detections found.")
-    class_id = extract_detections(ripe_result)
-    print(f"Ripe Class ID: {class_id}")
-    
+all_class_ids = []  # List to store class IDs from all images
+
+for defect_result in defect_results:
+    print(len(defect_result.boxes), "ripe detections found.")
+    class_ids = extract_detections(defect_result)
+    all_class_ids.append(class_ids)
+    print(f"Ripe Class IDs: {class_ids}")
