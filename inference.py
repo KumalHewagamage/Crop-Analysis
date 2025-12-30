@@ -5,6 +5,7 @@ import os
 def extract_detections(result):
     """
     Parses a single YOLOv8 'result' object and prints detection details.
+    Returns a list of class IDs for all detections in the image.
     """
     # 1. Basic Image Info
     path = result.path
@@ -19,6 +20,7 @@ def extract_detections(result):
 
     # 2. Get the Boxes object
     boxes = result.boxes
+    class_ids = []  # List to store all class IDs
 
     if len(boxes) == 0:
         print("No detection.")
@@ -28,6 +30,7 @@ def extract_detections(result):
             
             # 1. Class ID & Name
             cls_id = int(box.cls.cpu().item())
+            class_ids.append(cls_id)  # Add to list
             class_name = result.names[cls_id]
 
             # 2. Confidence Score
@@ -51,35 +54,34 @@ def extract_detections(result):
             print("-" * 15)
 
     print("="*50 + "\n")
+    return class_ids
 
 
 # ------------------ CONFIG  ------------------
-DEFECT_WEIGHTS = "models/pineapple_defect/weights/best.pt"
-RIPE_WEIGHTS = "models/pineapple_ripe/weights/best.pt"
-# SOURCE = "data/pineapple_defect/test/images"
-SOURCE = "test_imgs"
+RIPE_WEIGHTS = "runs/detect/pineapple_defect_model_v2/weights/best.pt"
 
-CONF = 0.25
+
+SOURCE = "test_imgs" # multiple images
+# SOURCE = "test_imgs/IMG_20231123_001322_jpg.rf.c592f813ccd6813395b8594894745740.jpg" # single image
+
+CONF = 0.5
 IMG_SIZE = 640
 DEVICE = '0' # 'cpu' or GPU id like '0'
 
 
 OUTPUT_PROJECT = "runs/infer"
-RIPE_OUTPUT_NAME = "ripe"
 DEFECT_OUTPUT_NAME = "defect"
 # Overwrite existing output folder if True
 EXIST_OK = True
 # ---------------------------------------------------------
 
 
-if not os.path.exists(DEFECT_WEIGHTS):
-    raise FileNotFoundError(f"Weights not found: {DEFECT_WEIGHTS}")
 if not os.path.exists(RIPE_WEIGHTS):
     raise FileNotFoundError(f"Weights not found: {RIPE_WEIGHTS}")
 
 
-defect_model = YOLO(DEFECT_WEIGHTS)
-ripe_model = YOLO(RIPE_WEIGHTS)
+defect_model = YOLO(RIPE_WEIGHTS)
+
 
 defect_results = defect_model.predict(
     source=SOURCE,
@@ -92,17 +94,21 @@ defect_results = defect_model.predict(
     save=True,
 )
 
-ripe_results = ripe_model.predict(
-    source=SOURCE,
-    conf=CONF,
-    imgsz=IMG_SIZE,
-    device=DEVICE,
-    project=OUTPUT_PROJECT,
-    name=RIPE_OUTPUT_NAME,
-    exist_ok=EXIST_OK,
-    save=True,
-)
+print(f"\n[Defect Detection] Total images processed: {len(defect_results)}")
 
-for defect_result,ripe_result in zip(defect_results, ripe_results):
-    extract_detections(defect_result)
-    extract_detections(ripe_result)
+all_class_ids = []  # List to store class IDs from all images
+
+for defect_result in defect_results:
+    print(len(defect_result.boxes), "defect detections found.")
+    class_ids = extract_detections(defect_result)
+    all_class_ids.append(class_ids)
+    print(f"Defect Class IDs: {class_ids}")
+
+# Print final result
+print("\n" + "="*50)
+if len(defect_results) == 1:
+    print(f"Class IDs (single image): {all_class_ids[0]}")
+else:
+    print(f"Class IDs (all images): {all_class_ids}")
+print("="*50)
+    
