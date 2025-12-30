@@ -59,7 +59,7 @@ def extract_detections(result):
 
 
 # ------------------ CONFIG  ------------------
-RIPE_WEIGHTS = "runs/detect/pineapple_ripe_model_v3/weights/best.pt"
+RIPE_WEIGHTS = "models/pineapple_ripe/weights/best.pt"
 
 
 SOURCE = "test_imgs" # multiple images
