@@ -32,7 +32,16 @@ class PineappleYieldPredictor:
         # 1. Load Preprocessor
         if not os.path.exists(PREPROCESSOR_PATH):
             raise FileNotFoundError(f"Preprocessor not found at {PREPROCESSOR_PATH}. Train model first.")
-        self.preprocessor = joblib.load(PREPROCESSOR_PATH)
+        try:
+            self.preprocessor = joblib.load(PREPROCESSOR_PATH)
+        except ModuleNotFoundError as e:
+            if 'numpy._core' in str(e):
+                raise RuntimeError(
+                    "NumPy version mismatch. The preprocessor was saved with a different NumPy version. "
+                    "Please retrain the model using 'python train_forecast.py' or downgrade NumPy to match the training environment."
+                ) from e
+            else:
+                raise
         
         # 2. Initialize Model Architecture
         # Count one-hot encoded columns + numerical columns
