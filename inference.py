@@ -59,7 +59,7 @@ def extract_detections(result):
 
 
 # ------------------ CONFIG  ------------------
-RIPE_WEIGHTS = "models/pineapple_defect/weights/best.pt"
+DEFECT_WEIGHTS = "models/pineapple_defect/weights/best.pt"
 
 
 # SOURCE = "test_imgs" # multiple images
@@ -77,11 +77,11 @@ EXIST_OK = True
 # ---------------------------------------------------------
 
 
-if not os.path.exists(RIPE_WEIGHTS):
-    raise FileNotFoundError(f"Weights not found: {RIPE_WEIGHTS}")
+if not os.path.exists(DEFECT_WEIGHTS):
+    raise FileNotFoundError(f"Weights not found: {DEFECT_WEIGHTS}")
 
 
-defect_model = YOLO(RIPE_WEIGHTS)
+defect_model = YOLO(DEFECT_WEIGHTS)
 
 
 defect_results = defect_model.predict(
