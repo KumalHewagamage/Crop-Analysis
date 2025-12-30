@@ -1,6 +1,7 @@
 
 from ultralytics import YOLO
 import os
+from models.grading import grade_pineapple
 
 def extract_detections(result):
     """
@@ -58,11 +59,11 @@ def extract_detections(result):
 
 
 # ------------------ CONFIG  ------------------
-RIPE_WEIGHTS = "runs/detect/pineapple_defect_model_v2/weights/best.pt"
+RIPE_WEIGHTS = "models/pineapple_defect/weights/best.pt"
 
 
-SOURCE = "test_imgs" # multiple images
-# SOURCE = "test_imgs/IMG_20231123_001322_jpg.rf.c592f813ccd6813395b8594894745740.jpg" # single image
+# SOURCE = "test_imgs" # multiple images
+SOURCE = "test_imgs/IMG_20230914_164300-1-_jpg.rf.09b56e1ea4ca9c9c6be6115075041023.jpg" # single image
 
 CONF = 0.5
 IMG_SIZE = 640
@@ -104,11 +105,11 @@ for defect_result in defect_results:
     all_class_ids.append(class_ids)
     print(f"Defect Class IDs: {class_ids}")
 
-# Print final result
-print("\n" + "="*50)
-if len(defect_results) == 1:
-    print(f"Class IDs (single image): {all_class_ids[0]}")
-else:
-    print(f"Class IDs (all images): {all_class_ids}")
-print("="*50)
+# Grading each pineapple based on detected defects
+for i, class_ids in enumerate(all_class_ids):
+    bs_count = class_ids.count(0)  # Black spots
+    holes_count = class_ids.count(1)  # Holes
+    wf_count = class_ids.count(2)  # White fungus
     
+    grade_info = grade_pineapple(bs_count, holes_count, wf_count)
+    print(f"Pineapple #{i+1} Grade: {grade_info['grade']}, Score: {grade_info['score']:.2f}, Levels: {grade_info['levels']}")

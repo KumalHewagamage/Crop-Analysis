@@ -1,1 +1,5 @@
 ultralytics
+pillow
+matplotlib
+numpy
+pandas
