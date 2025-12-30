@@ -1,6 +1,6 @@
 # Crop-Analysis — Pineapple Ripeness Detection
 
-![alt text](runs/infer/ripe/IMG_0792_JPG_jpg.rf.87381b0729a0a040fc1add8a15175b33.jpg)
+![alt text](models/ripe.jpg)
 
 Quick steps to get data, install dependencies, train models, and run inference for pineapple ripeness detection.
 
