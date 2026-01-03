@@ -81,10 +81,10 @@ if not os.path.exists(RIPE_WEIGHTS):
     raise FileNotFoundError(f"Weights not found: {RIPE_WEIGHTS}")
 
 
-defect_model = YOLO(RIPE_WEIGHTS)
+ripe_model = YOLO(RIPE_WEIGHTS)
 
 
-defect_results = defect_model.predict(
+ripe_results = ripe_model.predict(
     source=SOURCE,
     conf=CONF,
     imgsz=IMG_SIZE,
@@ -95,12 +95,12 @@ defect_results = defect_model.predict(
     save=True,
 )
 
-print(f"\n[Ripe Detection] Total images processed: {len(defect_results)}")
+print(f"\n[Ripe Detection] Total images processed: {len(ripe_results)}")
 
 all_class_ids = []  # List to store class IDs from all images
 
-for defect_result in defect_results:
-    print(len(defect_result.boxes), "ripe detections found.")
-    class_ids = extract_detections(defect_result)
+for ripe_result in ripe_results:
+    print(len(ripe_result.boxes), "ripe detections found.")
+    class_ids = extract_detections(ripe_result)
     all_class_ids.append(class_ids)
     print(f"Ripe Class IDs: {class_ids}")
