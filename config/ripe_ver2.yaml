@@ -1,0 +1,18 @@
+path:  data/pineapple_ripe_v2
+
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 4
+names: ['Pineapple', 'overripe', 'ripe', 'unripe']
+
+roboflow:
+  workspace: pineapple-grading-system-ripeness-machine-vision
+  project: pineapple-maturity-project
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pineapple-grading-system-ripeness-machine-vision/pineapple-maturity-project/dataset/4
+
+
+

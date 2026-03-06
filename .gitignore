@@ -5,3 +5,4 @@
 *.pyc
 /runs
 /archives
+/temp*
