@@ -413,7 +413,7 @@ RIPE_WEIGHTS = "models/unified_models/pineapple_ripe/weights/best.pt"
 DEFECT_WEIGHTS = "models/unified_models/pineapple_defect/weights/best.pt"
 
 # MQTT Configuration
-MQTT_BROKER = "localhost"  # Change to your MQTT broker address
+MQTT_BROKER = "broker.hivemq.com"  # Change to your MQTT broker address
 MQTT_PORT = 1883
 INPUT_TOPIC_A = "pineapple/imageA"      # Topic to receive view A images
 INPUT_TOPIC_B = "pineapple/imageB"      # Topic to receive view B images

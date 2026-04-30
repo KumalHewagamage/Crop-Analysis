@@ -8,13 +8,22 @@ import time
 import sys
 
 
+# ------------------ CONFIGURATION ------------------
+BROKER = "broker.hivemq.com"
+PORT = 1883
+NUM_CAMS = 3  # Set to 2 or 3
+IMAGE_PATH = "test_imgs/pineapple.jpg"  # The sample image to send as all views
+# ---------------------------------------------------
+
+
 def on_connect(client, userdata, flags, rc):
     """Callback when connected to broker"""
     if rc == 0:
-        print("✓ Connected to MQTT broker")
-        # Subscribe to results topic
+        print(f"✓ Connected to MQTT broker (Testing for {NUM_CAMS} views)")
+        # Subscribe to results topics
         client.subscribe("pineapple/results")
-        print("✓ Subscribed to results topic\n")
+        client.subscribe("pineapple/result_simple")
+        print("✓ Subscribed to results topics\n")
     else:
         print(f"✗ Connection failed with code {rc}")
 
@@ -33,61 +42,40 @@ def on_message(client, userdata, msg):
         print(f"Error parsing results: {e}")
 
 
-def send_image(client, image_path, request_id=None):
+def send_image_set(client, image_path, num_views, request_id):
     """
-    Send an image to the detector via MQTT
-    
-    Args:
-        client: MQTT client
-        image_path: Path to image file
-        request_id: Optional request ID for tracking
+    Send the same image to multiple view topics to simulate a multi-camera set
     """
     try:
-        # Read and encode image
         with open(image_path, 'rb') as f:
             image_data = f.read()
         
         image_base64 = base64.b64encode(image_data).decode('utf-8')
-        
-        # Create payload
         payload = {
             'image': image_base64,
+            'id': request_id
         }
-        
-        if request_id:
-            payload['id'] = request_id
-        
-        # Convert to JSON and publish
         message = json.dumps(payload)
         
-        print(f"Sending image: {image_path}")
-        print(f"Image size: {len(image_data)} bytes")
-        print(f"Encoded size: {len(message)} bytes")
-        
-        client.publish("pineapple/image", message)
-        print("✓ Image sent successfully\n")
+        topics = ["pineapple/imageA", "pineapple/imageB"]
+        if num_views >= 3:
+            topics.append("pineapple/imageC")
+            
+        print(f"Sending image set for ID: {request_id}")
+        for topic in topics:
+            client.publish(topic, message)
+            print(f"  ✓ Published to {topic}")
+        print("✓ Image set sent successfully\n")
         
     except FileNotFoundError:
         print(f"✗ Error: Image file not found: {image_path}")
     except Exception as e:
-        print(f"✗ Error sending image: {e}")
+        print(f"✗ Error sending image set: {e}")
 
 
 if __name__ == "__main__":
-    # Configuration
-    BROKER = "localhost"  # Change to your MQTT broker address
-    PORT = 1883
-    
-    # Check command line arguments
-    if len(sys.argv) < 2:
-        print("Usage: python test_mqtt_client.py <image_path>")
-        print("Example: python test_mqtt_client.py test_imgs/pineapple.jpg")
-        sys.exit(1)
-    
-    image_path = sys.argv[1]
-    
     # Create MQTT client
-    client = mqtt.Client(client_id="test_client")
+    client = mqtt.Client(client_id="test_client_multi")
     client.on_connect = on_connect
     client.on_message = on_message
     
@@ -95,16 +83,13 @@ if __name__ == "__main__":
         print(f"Connecting to MQTT broker at {BROKER}:{PORT}...")
         client.connect(BROKER, PORT, 60)
         
-        # Start network loop in background
         client.loop_start()
+        time.sleep(1) # Wait for connection
         
-        # Wait for connection
-        time.sleep(2)
+        # Send the images based on config
+        req_id = f"test_{int(time.time())}"
+        send_image_set(client, IMAGE_PATH, NUM_CAMS, req_id)
         
-        # Send image
-        send_image(client, image_path, request_id="test_001")
-        
-        # Wait for response
         print("Waiting for results... (Press Ctrl+C to exit)")
         while True:
             time.sleep(1)
