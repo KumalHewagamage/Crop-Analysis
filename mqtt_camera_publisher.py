@@ -7,37 +7,41 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 
 
-class DualCameraPublisher:
+class TriCameraPublisher:
     """
-    Captures images from two USB webcams and publishes them to MQTT topics.
+    Captures images from three USB webcams and publishes them to MQTT topics.
     """
     
     def __init__(self, broker_address, broker_port=1883,
-                 topic_a="pineapple/imageA", topic_b="pineapple/imageB",
+                 topic_a="pineapple/imageA", topic_b="pineapple/imageB", topic_c="pineapple/imageC",
                  trigger_topic="pineapple/capture_trigger",
-                 camera_a_index=0, camera_b_index=1):
+                 camera_a_index=0, camera_b_index=1, camera_c_index=2):
         """
-        Initialize the dual camera publisher.
+        Initialize the tri camera publisher.
         
         Args:
             broker_address: MQTT broker IP/hostname
             broker_port: MQTT broker port (default 1883)
             topic_a: Topic to publish camera A images
             topic_b: Topic to publish camera B images
+            topic_c: Topic to publish camera C images
             trigger_topic: Topic to listen for capture triggers
             camera_a_index: Index of camera A (usually 0)
             camera_b_index: Index of camera B (usually 1)
+            camera_c_index: Index of camera C (usually 2)
         """
         self.broker_address = broker_address
         self.broker_port = broker_port
         self.topic_a = topic_a
         self.topic_b = topic_b
+        self.topic_c = topic_c
         self.trigger_topic = trigger_topic
         self.camera_a_index = camera_a_index
         self.camera_b_index = camera_b_index
+        self.camera_c_index = camera_c_index
         
         # Initialize MQTT client
-        self.client = mqtt.Client(client_id="dual_camera_publisher")
+        self.client = mqtt.Client(client_id="tri_camera_publisher")
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.connected = False
@@ -46,10 +50,11 @@ class DualCameraPublisher:
         print("Initializing cameras...")
         self.cap_a = None
         self.cap_b = None
+        self.cap_c = None
         self.initialize_cameras()
         
     def initialize_cameras(self):
-        """Initialize both USB cameras"""
+        """Initialize all three USB cameras"""
         # Initialize Camera A
         print(f"Opening Camera A (index {self.camera_a_index})...")
         self.cap_a = cv2.VideoCapture(self.camera_a_index)
@@ -76,11 +81,25 @@ class DualCameraPublisher:
         
         print("✓ Camera B initialized")
         
+        # Initialize Camera C
+        print(f"Opening Camera C (index {self.camera_c_index})...")
+        self.cap_c = cv2.VideoCapture(self.camera_c_index)
+        if not self.cap_c.isOpened():
+            raise RuntimeError(f"Failed to open Camera C at index {self.camera_c_index}")
+        
+        # Set camera C properties for better quality
+        self.cap_c.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap_c.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap_c.set(cv2.CAP_PROP_AUTOFOCUS, 1)
+        
+        print("✓ Camera C initialized")
+        
         # Warm up cameras
         print("Warming up cameras...")
         for _ in range(5):
             self.cap_a.read()
             self.cap_b.read()
+            self.cap_c.read()
             time.sleep(0.1)
         print("✓ Cameras ready!\n")
     
@@ -116,7 +135,7 @@ class DualCameraPublisher:
             print(f"✗ Error processing trigger message: {e}")
     
     def capture_and_publish(self, request_id=None):
-        """Capture images from both cameras and publish to MQTT topics"""
+        """Capture images from all cameras and publish to MQTT topics"""
         if not self.connected:
             print("✗ Not connected to MQTT broker")
             return False
@@ -137,7 +156,6 @@ class DualCameraPublisher:
         if not ret_a:
             print("✗ Failed to capture from Camera A")
             return False
-        
         print("✓ Camera A captured")
         
         # Capture from Camera B
@@ -145,16 +163,24 @@ class DualCameraPublisher:
         if not ret_b:
             print("✗ Failed to capture from Camera B")
             return False
-        
         print("✓ Camera B captured")
+        
+        # Capture from Camera C
+        ret_c, frame_c = self.cap_c.read()
+        if not ret_c:
+            print("✗ Failed to capture from Camera C")
+            return False
+        print("✓ Camera C captured")
         
         # Encode images to JPEG
         _, buffer_a = cv2.imencode('.jpg', frame_a, [cv2.IMWRITE_JPEG_QUALITY, 90])
         _, buffer_b = cv2.imencode('.jpg', frame_b, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        _, buffer_c = cv2.imencode('.jpg', frame_c, [cv2.IMWRITE_JPEG_QUALITY, 90])
         
         # Convert to base64
         image_a_b64 = base64.b64encode(buffer_a).decode('utf-8')
         image_b_b64 = base64.b64encode(buffer_b).decode('utf-8')
+        image_c_b64 = base64.b64encode(buffer_c).decode('utf-8')
         
         # Create payloads
         payload_a = json.dumps({
@@ -171,13 +197,22 @@ class DualCameraPublisher:
             'camera': 'B'
         })
         
+        payload_c = json.dumps({
+            'id': request_id,
+            'image': image_c_b64,
+            'timestamp': timestamp,
+            'camera': 'C'
+        })
+        
         # Publish to MQTT topics
         result_a = self.client.publish(self.topic_a, payload_a)
         result_b = self.client.publish(self.topic_b, payload_b)
+        result_c = self.client.publish(self.topic_c, payload_c)
         
-        if result_a.rc == mqtt.MQTT_ERR_SUCCESS and result_b.rc == mqtt.MQTT_ERR_SUCCESS:
+        if result_a.rc == mqtt.MQTT_ERR_SUCCESS and result_b.rc == mqtt.MQTT_ERR_SUCCESS and result_c.rc == mqtt.MQTT_ERR_SUCCESS:
             print(f"✓ Published to {self.topic_a}")
             print(f"✓ Published to {self.topic_b}")
+            print(f"✓ Published to {self.topic_c}")
             print(f"{'='*70}\n")
             return True
         else:
@@ -185,7 +220,7 @@ class DualCameraPublisher:
             return False
     
     def show_preview(self):
-        """Show live preview from both cameras (optional manual trigger with 'c', press 'q' to quit)"""
+        """Show live preview from all cameras (optional manual trigger with 'c', press 'q' to quit)"""
         print("\n" + "="*70)
         print("LIVE PREVIEW MODE")
         print("="*70)
@@ -199,23 +234,28 @@ class DualCameraPublisher:
             # Read frames
             ret_a, frame_a = self.cap_a.read()
             ret_b, frame_b = self.cap_b.read()
+            ret_c, frame_c = self.cap_c.read()
             
-            if not ret_a or not ret_b:
+            if not ret_a or not ret_b or not ret_c:
                 print("✗ Failed to read from cameras")
                 break
             
             # Add labels to frames
             frame_a_display = frame_a.copy()
             frame_b_display = frame_b.copy()
+            frame_c_display = frame_c.copy()
             
             cv2.putText(frame_a_display, "Camera A", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.putText(frame_b_display, "Camera B", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(frame_c_display, "Camera C", (10, 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             
             # Display frames
             cv2.imshow('Camera A', frame_a_display)
             cv2.imshow('Camera B', frame_b_display)
+            cv2.imshow('Camera C', frame_c_display)
             
             # Check for key press
             key = cv2.waitKey(1) & 0xFF
@@ -273,6 +313,8 @@ class DualCameraPublisher:
             self.cap_a.release()
         if self.cap_b is not None:
             self.cap_b.release()
+        if self.cap_c is not None:
+            self.cap_c.release()
         cv2.destroyAllWindows()
         print("✓ Cameras released")
 
@@ -303,11 +345,13 @@ MQTT_BROKER = "localhost"  # Change to your MQTT broker address
 MQTT_PORT = 1883
 TOPIC_A = "pineapple/imageA"
 TOPIC_B = "pineapple/imageB"
+TOPIC_C = "pineapple/imageC"
 TRIGGER_TOPIC = "pineapple/capture_trigger"  # Topic to listen for capture commands
 
-# Camera indices (usually 0 and 1 for two USB cameras)
+# Camera indices (usually 0, 1, and 2 for three USB cameras)
 CAMERA_A_INDEX = 0
 CAMERA_B_INDEX = 1
+CAMERA_C_INDEX = 2
 
 # Mode: 'preview' for live preview window, 'headless' for no window
 RUN_MODE = 'preview'  # Change to 'headless' for production
@@ -317,30 +361,32 @@ RUN_MODE = 'preview'  # Change to 'headless' for production
 if __name__ == "__main__":
     try:
         print("="*70)
-        print("DUAL CAMERA MQTT PUBLISHER")
+        print("TRI CAMERA MQTT PUBLISHER")
         print("="*70 + "\n")
         
         # List available cameras
         available = list_available_cameras()
         
-        if len(available) < 2:
-            print("✗ Error: At least 2 cameras required!")
+        if len(available) < 3:
+            print("✗ Error: At least 3 cameras required!")
             print(f"  Found only {len(available)} camera(s)")
-            if len(available) == 1:
-                print(f"  Available at index: {available[0]}")
+            if len(available) >= 1:
+                print(f"  Available at index: {available}")
             exit(1)
         
-        print(f"Using cameras at indices: {CAMERA_A_INDEX} and {CAMERA_B_INDEX}\n")
+        print(f"Using cameras at indices: {CAMERA_A_INDEX}, {CAMERA_B_INDEX}, and {CAMERA_C_INDEX}\n")
         
         # Initialize publisher
-        publisher = DualCameraPublisher(
+        publisher = TriCameraPublisher(
             broker_address=MQTT_BROKER,
             broker_port=MQTT_PORT,
             topic_a=TOPIC_A,
             topic_b=TOPIC_B,
+            topic_c=TOPIC_C,
             trigger_topic=TRIGGER_TOPIC,
             camera_a_index=CAMERA_A_INDEX,
-            camera_b_index=CAMERA_B_INDEX
+            camera_b_index=CAMERA_B_INDEX,
+            camera_c_index=CAMERA_C_INDEX
         )
         
         # Connect to MQTT broker
